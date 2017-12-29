@@ -45,6 +45,12 @@ else:
 c_void = c_int
 c_int_p = POINTER(c_int)
 
+XSB_SUCCESS        = 0
+XSB_FAILURE        = 1
+XSB_ERROR          = 2
+XSB_OVERFLOW       = 3
+XSB_SPECIAL_RETURN = 4
+
 #
 # Low level C interface
 #
@@ -445,8 +451,14 @@ def xsb_hl_command(fname, args):
     c2p_functor(fname, len(args), reg_term(1))
     _hl_args(args)
 
-    if xsb_command():
-        raise Exception ("Error running command in XSB.")
+    rcode = xsb_command()
+    if rcode == XSB_FAILURE:
+        raise Exception ("XSB Command %s %s failure (%d)." % (fname, repr(args), rcode))
+    elif rcode == XSB_ERROR:
+        raise Exception ("XSB Command %s %s error(%d): %s %s" % (fname, repr(args), rcode, xsb_get_error_type(), xsb_get_error_message()))
+    elif rcode == XSB_OVERFLOW:
+        raise Exception ("XSB Command %s %s overflow (%d)." % (fname, repr(args), rcode))
+    
     
 def xsb_hl_query(fname, args):
 
@@ -472,6 +484,11 @@ def xsb_hl_query(fname, args):
                 raise Exception ('failed to detect datatype of arg %d' % i)
         res.append(row)            
         rcode = xsb_next()
+
+    if rcode == XSB_ERROR:
+        raise Exception ("XSB Query %s %s error(%d): %s %s" % (fname, repr(args), rcode, xsb_get_error_type(), xsb_get_error_message()))
+    elif rcode == XSB_OVERFLOW:
+        raise Exception ("XSB Query %s %s overflow (%d)." % (fname, repr(args), rcode))
 
     return res
 
