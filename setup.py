@@ -8,7 +8,7 @@ setup(name         ='py-xsb-prolog',
       url          ='https://github.com/gooofy/py-xsb-prolog',
       classifiers  = [
                       'Topic :: Scientific/Engineering :: Artificial Intelligence',
-                      'Topic :: Software Development :: Libraries :: Python Modules'
+                      'Topic :: Software Development :: Libraries :: Python Modules',
                       'Operating System :: POSIX :: Linux',
                       'License :: OSI Approved :: GNU Lesser General Public License v3 (LGPLv3)',
                       'Programming Language :: Python :: 2',
