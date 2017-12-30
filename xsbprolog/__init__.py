@@ -492,3 +492,93 @@ def xsb_hl_query(fname, args):
 
     return res
 
+def xsb_print_term(term, do_lf = True):
+    if is_var(term):
+        print "_%d" % term,
+
+    elif is_int(term):
+        print "%d" % p2c_int(term),
+
+    elif is_float(term):
+        print "%f" % p2c_float(term),
+
+    elif is_nil(term):
+        print "[]",
+
+    elif is_string(term):
+        print "%s" % p2c_string(term),
+
+    elif is_list(term):
+      print "[",
+      xsb_print_term(p2p_car(term), do_lf=False)
+      term = p2p_cdr(term)
+      while is_list(term):
+          print ",",
+          xsb_print_term(p2p_car(term), do_lf=False)
+          term = p2p_cdr(term)
+      
+      if not is_nil(term):
+          print "|",
+          xsb_print_term(term, do_lf=False)
+      
+      print "]",
+
+    elif is_functor(term):
+        print "%s" % p2c_functor(term),
+        if p2c_arity(term) > 0:
+            print "(",
+            xsb_print_term(p2p_arg(term,1), do_lf=False)
+            i = 2
+            while i <= p2c_arity(term):
+                print ",",
+                xsb_print_term(p2p_arg(term,i), do_lf=False)
+                i += 1
+            
+            print ")",
+
+    else:
+        print "error, unrecognized type",
+
+    if do_lf:
+        print
+    
+
+def xsb_hl_query_string(qs):
+
+    rcode = xsb_query_string(qs)
+    res = []
+
+    # import pdb; pdb.set_trace()
+
+    while not rcode:
+
+        row = {}
+
+        term = reg_term(2)
+
+        # xsb_print_term(term)
+
+        if is_functor(term):
+                
+            for i in range(p2c_arity(term)):
+                a = p2p_arg(term, i+1)
+                if is_float(a):
+                    row[i] = p2c_float(a)
+                elif is_string(a):
+                    row[i] = p2c_string(a).decode('utf8', errors='ignore')
+                elif is_int(a):
+                    row[i] = p2c_int(a)
+                else:
+                    raise Exception ('failed to detect datatype of arg %d' % i)
+            res.append(row)
+        elif is_string(term):
+            res.append(p2c_string(term))
+        rcode = xsb_next()
+
+    if rcode == XSB_ERROR:
+        raise Exception ("XSB Query %s error(%d): %s %s" % (qs, rcode, xsb_get_error_type(), xsb_get_error_message()))
+    elif rcode == XSB_OVERFLOW:
+        raise Exception ("XSB Query %s overflow (%d)." % (qs, rcode))
+
+    return res
+
