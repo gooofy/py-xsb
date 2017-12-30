@@ -459,6 +459,59 @@ def xsb_hl_command(fname, args):
     elif rcode == XSB_OVERFLOW:
         raise Exception ("XSB Command %s %s overflow (%d)." % (fname, repr(args), rcode))
     
+def xsb_format_term(term):
+    if is_var(term):
+        return "_%d" % term
+
+    elif is_int(term):
+        return "%d" % p2c_int(term)
+
+    elif is_float(term):
+        return "%f" % p2c_float(term)
+
+    elif is_nil(term):
+        return "[]"
+
+    elif is_string(term):
+        return "%s" % p2c_string(term)
+
+    elif is_list(term):
+        res =  "["
+        res += xsb_format_term(p2p_car(term))
+        term = p2p_cdr(term)
+        while is_list(term):
+            res += ","
+            res += xsb_format_term(p2p_car(term))
+            term = p2p_cdr(term)
+        
+        if not is_nil(term):
+            res += "|"
+            res += xsb_format_term(term)
+        
+        res += "]"
+        return res
+
+    elif is_functor(term):
+        res = "%s" % p2c_functor(term)
+        if p2c_arity(term) > 0:
+            res += "("
+            res += xsb_format_term(p2p_arg(term,1))
+            i = 2
+            while i <= p2c_arity(term):
+                res += ","
+                res += xsb_format_term(p2p_arg(term,i))
+                i += 1
+            
+            res += ")"
+        return res
+
+    else:
+        return "error, unrecognized type",
+
+
+def xsb_print_term(term):
+    print xsb_format_term(term)
+
     
 def xsb_hl_query(fname, args):
 
@@ -480,8 +533,11 @@ def xsb_hl_query(fname, args):
                 row[vs[i]] = p2c_string(a).decode('utf8', errors='ignore')
             elif is_int(a):
                 row[vs[i]] = p2c_int(a)
+            elif is_var(a):
+                row[vs[i]] = None
             else:
-                raise Exception ('failed to detect datatype of arg %d' % i)
+                xsb_close_query()
+                raise Exception ('failed to detect datatype of arg %d (%s)' % (i, xsb_format_term(a)))
         res.append(row)            
         rcode = xsb_next()
 
@@ -491,57 +547,6 @@ def xsb_hl_query(fname, args):
         raise Exception ("XSB Query %s %s overflow (%d)." % (fname, repr(args), rcode))
 
     return res
-
-def xsb_print_term(term, do_lf = True):
-    if is_var(term):
-        print "_%d" % term,
-
-    elif is_int(term):
-        print "%d" % p2c_int(term),
-
-    elif is_float(term):
-        print "%f" % p2c_float(term),
-
-    elif is_nil(term):
-        print "[]",
-
-    elif is_string(term):
-        print "%s" % p2c_string(term),
-
-    elif is_list(term):
-      print "[",
-      xsb_print_term(p2p_car(term), do_lf=False)
-      term = p2p_cdr(term)
-      while is_list(term):
-          print ",",
-          xsb_print_term(p2p_car(term), do_lf=False)
-          term = p2p_cdr(term)
-      
-      if not is_nil(term):
-          print "|",
-          xsb_print_term(term, do_lf=False)
-      
-      print "]",
-
-    elif is_functor(term):
-        print "%s" % p2c_functor(term),
-        if p2c_arity(term) > 0:
-            print "(",
-            xsb_print_term(p2p_arg(term,1), do_lf=False)
-            i = 2
-            while i <= p2c_arity(term):
-                print ",",
-                xsb_print_term(p2p_arg(term,i), do_lf=False)
-                i += 1
-            
-            print ")",
-
-    else:
-        print "error, unrecognized type",
-
-    if do_lf:
-        print
-    
 
 def xsb_hl_query_string(qs):
 
@@ -568,8 +573,11 @@ def xsb_hl_query_string(qs):
                     row[i] = p2c_string(a).decode('utf8', errors='ignore')
                 elif is_int(a):
                     row[i] = p2c_int(a)
+                elif is_var(a):
+                    row[i] = None
                 else:
-                    raise Exception ('failed to detect datatype of arg %d' % i)
+                    xsb_close_query()
+                    raise Exception ('failed to detect datatype of arg %d (%s)' % (i, xsb_format_term(a)))
             res.append(row)
         elif is_string(term):
             res.append(p2c_string(term))
