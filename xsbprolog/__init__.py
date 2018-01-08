@@ -390,7 +390,7 @@ def xsb_set_var_int(v, i):
 
 # set argument i of answer term to atom value s, for filtering 
 def xsb_set_var_string(s, i):
-    return c2p_string(s, p2p_arg(reg_term(2),i))
+    return c2p_string(s.encode('utf8'), p2p_arg(reg_term(2),i))
 
 # set argument i of answer term to atom value f, for filtering
 def xsb_set_var_float(f, i):
@@ -402,7 +402,7 @@ def xsb_var_int(i):
 
 # return string (atom) argument i of answer term 
 def xsb_var_string(i):
-    return p2c_string(p2p_arg(reg_term(2),i))
+    return p2c_string(p2p_arg(reg_term(2),i)).decode('utf8')
 
 # return float argument i of answer term 
 def xsb_var_float(i):
