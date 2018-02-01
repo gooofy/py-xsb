@@ -126,6 +126,34 @@ close the connection:
 xsb_close()
 ----
 
+Installation Notes
+~~~~~~~~~~~~~~~~~~
+
+`py-xsb-prolog` needs the XSB dynamic library to work: First, follow the standard XSB build instructions:
+
+[source,bash]
+----
+tar xfvz XSB.tar.gz 
+cd XSB/build
+./configure
+./makexsb 
+----
+
+now, in order to build `libxsb.so`, execute this command:
+
+[source,bash]
+----
+[guenter@dagobert build]$ ./makexsb dynmodule
+
+make -f ../config/x86_64-unknown-linux-gnu/topMakefile   dynmodule
+
+
+Preparing...
+make[1]: Entering directory `/home/guenter/projects/hal9000/xsb/XSB/emu'
+Making XSB Shared Library /home/guenter/projects/hal9000/xsb/XSB/config/x86_64-unknown-linux-gnu/bin/libxsb.so
+make[1]: Leaving directory `/home/guenter/projects/hal9000/xsb/XSB/emu'
+... done ...
+----
 
 Links
 ~~~~~
