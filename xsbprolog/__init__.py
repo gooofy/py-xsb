@@ -26,7 +26,7 @@ import copy
 import sys
 import logging
 
-from ctypes import cdll, c_longlong, c_int64, c_int32, c_int, c_double, c_char_p, POINTER, c_size_t
+from ctypes import cdll, c_longlong, c_int64, c_int32, c_int, c_double, c_char_p, POINTER, c_size_t, create_string_buffer, byref
 
 libxsb = cdll.LoadLibrary('libxsb.so')
 
@@ -566,6 +566,7 @@ def xsb_hl_query_string(qs):
                 
             for i in range(p2c_arity(term)):
                 a = p2p_arg(term, i+1)
+                list_len = c_int()
                 if is_float(a):
                     row[i] = p2c_float(a)
                 elif is_string(a):
@@ -574,6 +575,10 @@ def xsb_hl_query_string(qs):
                     row[i] = p2c_int(a)
                 elif is_var(a):
                     row[i] = None
+                elif is_charlist(a, byref(list_len)):
+                    buf = create_string_buffer(list_len.value+1)
+                    p2c_chars(a, buf, list_len.value+1)
+                    row[i] = buf.value
                 else:
                     xsb_close_query()
                     raise Exception ('failed to detect datatype of arg %d (%s)' % (i, xsb_format_term(a)))
