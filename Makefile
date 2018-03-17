@@ -21,4 +21,4 @@ upload:
 
 clean:
 	rm -f *.html *.png README *.xwam README.md  README.xml
-	rm -rf dist xsbprolog.egg-info build
+	rm -rf dist py_xsb_prolog.egg-info xsbprolog.egg-info build
