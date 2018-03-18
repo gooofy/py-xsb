@@ -3,7 +3,7 @@
 from setuptools import setup, find_packages
 
 setup(name         ='py-xsb-prolog',
-      version      ='0.1.4',
+      version      ='0.1.5',
       description  ='Python interface for XSB Prolog',
       url          ='https://github.com/gooofy/py-xsb-prolog',
       classifiers  = [

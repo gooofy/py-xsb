@@ -547,44 +547,71 @@ def xsb_hl_query(fname, args):
 
     return res
 
+def _prolog2py(term):
+
+    if is_float(term):
+        return p2c_float(term)
+
+    elif is_string(term):
+        return p2c_string(term).decode('utf8', errors='ignore')
+
+    elif is_int(term):
+        return p2c_int(term)
+
+    elif is_var(term):
+        return None
+
+    elif is_atom(term):
+        raise Exception ('sorry, not implemented yet.')
+
+    elif is_functor(term):
+
+        name = p2c_functor(term)
+
+        args = []
+
+        for i in range(p2c_arity(term)):
+            arg = p2p_arg(term, i+1)
+            args.append(_prolog2py(arg))
+
+        return (name, args)
+
+    else:
+        list_len = c_int()
+        if is_charlist(term, byref(list_len)):
+            buf = create_string_buffer(list_len.value+1)
+            p2c_chars(term, buf, list_len.value+1)
+            return buf.value
+
+    raise Exception ('failed to detect datatype of %s' % xsb_format_term(term))
+
 def xsb_hl_query_string(qs):
 
     rcode = xsb_query_string(qs)
     res = []
 
-    # import pdb; pdb.set_trace()
-
     while not rcode:
 
-        row = {}
-
         term = reg_term(2)
+        # import pdb; pdb.set_trace()
 
-        # xsb_print_term(term)
+        try:
+            pyterm = _prolog2py(term)
 
-        if is_functor(term):
-                
-            for i in range(p2c_arity(term)):
-                a = p2p_arg(term, i+1)
-                list_len = c_int()
-                if is_float(a):
-                    row[i] = p2c_float(a)
-                elif is_string(a):
-                    row[i] = p2c_string(a).decode('utf8', errors='ignore')
-                elif is_int(a):
-                    row[i] = p2c_int(a)
-                elif is_var(a):
-                    row[i] = None
-                elif is_charlist(a, byref(list_len)):
-                    buf = create_string_buffer(list_len.value+1)
-                    p2c_chars(a, buf, list_len.value+1)
-                    row[i] = buf.value
-                else:
-                    xsb_close_query()
-                    raise Exception ('failed to detect datatype of arg %d (%s)' % (i, xsb_format_term(a)))
-            res.append(row)
-        elif is_string(term):
-            res.append(p2c_string(term))
+            if isinstance(pyterm, tuple):
+                row = {}
+                i = 0
+                for a in pyterm[1]:
+                    row[i] = a
+                    i += 1
+                res.append(row)
+            else:
+                res.append(pyterm)
+
+        except Exception as e:
+            xsb_close_query()
+            raise e
+
         rcode = xsb_next()
 
     if rcode == XSB_ERROR:
