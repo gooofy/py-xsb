@@ -516,13 +516,13 @@ def xsb_hl_command(cmd):
 
     rcode = xsb_command_string(cmds)
     if rcode == XSB_FAILURE:
-        raise Exception ("XSB Command %s %s failure (%d)." % (fname, repr(args), rcode))
+        raise Exception ("XSB Command %s failure (%d)." % (cmds, rcode))
     elif rcode == XSB_ERROR:
-        raise Exception ("XSB Command %s %s error(%d): %s %s" % (fname, repr(args), rcode, xsb_get_error_type(), xsb_get_error_message()))
+        raise Exception ("XSB Command %s error(%d): %s %s" % (cmds, rcode, xsb_get_error_type(), xsb_get_error_message()))
     elif rcode == XSB_OVERFLOW:
-        raise Exception ("XSB Command %s %s overflow (%d)." % (fname, repr(args), rcode))
+        raise Exception ("XSB Command %s overflow (%d)." % (cmds, rcode))
     
-def xsb_term2py(term):
+def xsb_term2py(term, auto_string=True):
 
     if is_float(term):
         return p2c_float(term)
@@ -531,7 +531,7 @@ def xsb_term2py(term):
         return p2c_int(term)
 
     elif is_var(term):
-        return XSBVar(name=p2c_string(term).decode('utf8', errors='ignore'))
+        return XSBVariable(name=p2c_string(term).decode('utf8', errors='ignore'))
 
     elif is_atom(term):
         return XSBAtom(name=p2c_string(term).decode('utf8', errors='ignore'))
@@ -543,7 +543,7 @@ def xsb_term2py(term):
         args = []
         for i in range(p2c_arity(term)):
             arg = p2p_arg(term, i+1)
-            args.append(xsb_term2py(arg))
+            args.append(xsb_term2py(arg, auto_string=auto_string))
 
         return XSBFunctor(name=name, args=args)
 
@@ -551,25 +551,37 @@ def xsb_term2py(term):
         return XSBString(value=p2c_string(term).decode('utf8', errors='ignore'))
 
     else:
-        list_len = c_int()
-        if is_charlist(term, byref(list_len)):
-            buf = create_string_buffer(list_len.value+1)
-            p2c_chars(term, buf, list_len.value+1)
-            return XSBString(value=buf.value.decode('utf8', errors='ignore'))
-        else:
-            res = []
-            while is_list(term):
-                res.append(xsb_term2py(p2p_car(term)))
-                term = p2p_cdr(term)
+
+        int_only = True
+
+        # list_len = c_int()
+        # if is_charlist(term, byref(list_len)):
+        #     buf = create_string_buffer(list_len.value+1)
+        #     p2c_chars(term, buf, list_len.value+1)
+        #     return XSBString(value=buf.value.decode('utf8', errors='ignore'))
+        # else:
+
+        res = []
+        while is_list(term):
+            r = xsb_term2py(p2p_car(term), auto_string=auto_string)
+            res.append(r)
+            if not isinstance(r, int):
+                int_only=False
+            term = p2p_cdr(term)
+
+        # if not is_nil(term):
+        #     res.append(xsb_term2py(term, auto_string=auto_string))
         
-            if not is_nil(term):
-                res.append(xsb_term2py(term))
+        # import pdb; pdb.set_trace()
+        if auto_string and int_only and res:
+            s = u''.join(map(lambda b: unichr(b), res))
+            res = XSBString(value=s)
         
-            return res
+        return res
 
     raise Exception ('failed to detect datatype of %s' % xsb_format_term(term))
 
-def xsb_hl_query(query):
+def xsb_hl_query(query, auto_string=True):
 
     if isinstance(query, XSBFunctor):
         querys = str(query) + '.'
@@ -587,7 +599,7 @@ def xsb_hl_query(query):
         # import pdb; pdb.set_trace()
 
         try:
-            res.append(xsb_term2py(term))
+            res.append(xsb_term2py(term, auto_string=auto_string))
         except Exception as e:
             xsb_close_query()
             raise e
@@ -595,9 +607,9 @@ def xsb_hl_query(query):
         rcode = xsb_next()
 
     if rcode == XSB_ERROR:
-        raise Exception ("XSB Query %s error(%d): %s %s" % (qs, rcode, xsb_get_error_type(), xsb_get_error_message()))
+        raise Exception ("XSB Query %s error(%d): %s %s" % (querys, rcode, xsb_get_error_type(), xsb_get_error_message()))
     elif rcode == XSB_OVERFLOW:
-        raise Exception ("XSB Query %s overflow (%d)." % (qs, rcode))
+        raise Exception ("XSB Query %s overflow (%d)." % (querys, rcode))
 
     return res
 

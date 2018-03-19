@@ -8,9 +8,9 @@ child(donna,emily).
 descend(X,Y) :- child(X,Y). 
 descend(X,Y) :- child(X,Z), descend(Z,Y).
 
-label(anne, 'Anne').
-label(bridget, 'Bridget').
-label(caroline, 'Caroline').
-label(donna, 'Donna').
-label(guenter, 'Günter').
+label('günter', "Günter").
+label(anne, "Anne").
+label(bridget, "Bridget").
+label(caroline, "Caroline").
+label(donna, "Donna").
 
