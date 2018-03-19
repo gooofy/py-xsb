@@ -39,7 +39,7 @@ for row in xsb_hl_query('label(X, L).'):
 for row in xsb_hl_query(XSBFunctor('descend', [XSBVariable('X'), XSBVariable('Y')])):
     print u"decendant of %s is %s" % (row[0], row[1])
 
-for row in xsb_hl_query('A = 1, B = 0.5, C = "hello", D = yes, E = foo(bar), F = [1,2,3].'):
+for row in xsb_hl_query(u'A = 1, B = 0.5, C = "hello", D = yes, E = foo(bar), F = [1.1,2.2], G = \'günter\'.'):
 
     for i, r in enumerate(row):
         print u"#%d: %-10s (type: %-20s, class: %-20s)" % (i, r, type(r), r.__class__)

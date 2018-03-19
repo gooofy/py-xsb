@@ -428,10 +428,18 @@ class XSBAtom(XSBJSON):
             self.name = name
 
     def __str__(self):
-        return self.name
+
+        name = self.name
+
+        try:
+            name.decode('ascii')
+        except:
+            name = u"'" + name + u"'"
+
+        return name
 
     def __repr__(self):
-        return 'XSBAtom(name=%s)' % self.name
+        return u'XSBAtom(name=%s)' % self.name
 
     def to_dict(self):
         return {'pt': 'atom', 'name': self.name}
@@ -486,7 +494,7 @@ class XSBFunctor(XSBJSON):
     def __str__(self):
         if not self.args:
             return self.name
-        return self.name + '(' + ','.join(map(lambda a: str(a), self.args)) + ')'
+        return self.name + u'(' + u','.join(map(lambda a: unicode(a), self.args)) + u')'
 
     def __repr__(self):
         return 'XSBFunctor(name=%s, args=%s)' % (self.name, repr(self.args))
@@ -584,13 +592,13 @@ def xsb_term2py(term, auto_string=True):
 def xsb_hl_query(query, auto_string=True):
 
     if isinstance(query, XSBFunctor):
-        querys = str(query) + '.'
+        querys = unicode(query) + '.'
     elif isinstance(query, string_types):
         querys = query
     else:
         raise Exception ('XSBFunctor or String expected.')
 
-    rcode = xsb_query_string(querys)
+    rcode = xsb_query_string(querys.encode('utf8'))
     res = []
 
     while not rcode:
