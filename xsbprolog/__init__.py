@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*- 
 
 #
-# Copyright 2017 Guenter Bartsch
+# Copyright 2017, 2018 Guenter Bartsch
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -21,11 +21,10 @@
 # low level XSB interface, converted to ctypes from XSB 3.8's emu/cinterf.h
 #
 
-import StringIO
-import copy
 import sys
-import logging
+import json
 
+from six    import python_2_unicode_compatible, text_type, string_types
 from ctypes import cdll, c_longlong, c_int64, c_int32, c_int, c_double, c_char_p, POINTER, c_size_t, create_string_buffer, byref
 
 libxsb = cdll.LoadLibrary('libxsb.so')
@@ -411,6 +410,93 @@ def xsb_var_float(i):
 # higher-level convenience functions
 #
 
+class XSBJSON:
+
+    """ just a base class that indicates to_dict() and __init__(json_dict) are supported
+        for JSON (de)-serialization """
+
+    def to_dict(self):
+        raise Exception ("to_dict is not implemented, but should be!")
+
+@python_2_unicode_compatible
+class XSBAtom(XSBJSON):
+
+    def __init__ (self, name=None, json_dict=None):
+        if json_dict:
+            self.name = json_dict['name']
+        else:
+            self.name = name
+
+    def __str__(self):
+        return self.name
+
+    def __repr__(self):
+        return 'XSBAtom(name=%s)' % self.name
+
+    def to_dict(self):
+        return {'pt': 'atom', 'name': self.name}
+
+@python_2_unicode_compatible
+class XSBVariable(XSBJSON):
+
+    def __init__ (self, name=None, json_dict=None):
+        if json_dict:
+            self.name = json_dict['name']
+        else:
+            self.name = name
+
+    def __str__(self):
+        return self.name
+
+    def __repr__(self):
+        return 'XSBVariable(name=%s)' % self.name
+
+    def to_dict(self):
+        return {'pt': 'variable', 'name': self.name}
+
+@python_2_unicode_compatible
+class XSBString(XSBJSON):
+
+    def __init__ (self, value=None, json_dict=None):
+        if json_dict:
+            self.value = json_dict['value']
+        else:
+            self.value = value
+
+    def __str__(self):
+        return '"' + self.value + '"'
+
+    def __repr__(self):
+        return 'XSBString(value=%s)' % self.value
+
+    def to_dict(self):
+        return {'pt': 'string', 'value': self.value}
+
+@python_2_unicode_compatible
+class XSBFunctor(XSBJSON):
+
+    def __init__ (self, name=None, args=None, json_dict=None):
+        if json_dict:
+            self.name = json_dict['name']
+            self.args = json_dict['args']
+        else:
+            self.name = name
+            self.args = args
+
+    def __str__(self):
+        if not self.args:
+            return self.name
+        return self.name + '(' + ','.join(map(lambda a: str(a), self.args)) + ')'
+
+    def __repr__(self):
+        return 'XSBFunctor(name=%s, args=%s)' % (self.name, repr(self.args))
+
+    def __getitem__(self, sliced):
+        return self.args[sliced]
+
+    def to_dict(self):
+        return {'pt': 'functor', 'name': self.name, 'args': self.args}
+
 def xsb_hl_init(args):
 
     argv = (c_char_p * (len(args)+1))()
@@ -419,38 +505,16 @@ def xsb_hl_init(args):
 
     xsb_init(len(args), argv)
 
-def _hl_args(args):
+def xsb_hl_command(cmd):
 
-    vs = {}
+    if isinstance(cmd, XSBFunctor):
+        cmds = str(cmd) + '.'
+    elif isinstance(cmd, string_types):
+        cmds = cmd
+    else:
+        raise Exception ('XSBFunctor or String expected.')
 
-    for i, a in enumerate(args):
-
-        if isinstance(a, basestring):
-            if len(a)>1 and a[0] == "'":
-                c2p_string(a[1:len(a)-1], p2p_arg(reg_term(1), i+1))
-            elif a[0].islower():
-                c2p_string(a, p2p_arg(reg_term(1), i+1))
-            else:
-                # remember where variables are
-                vs[i+1] = a
-
-        elif isinstance (a, int):
-            c2p_int(a, p2p_arg(reg_term(1), i+1))
-
-        elif isinstance (a, float):
-            c2p_float(a, p2p_arg(reg_term(1), i+1))
-            
-        else:
-            raise Exception ('unsupported datatype: %s' % type(a))
-
-    return vs
-
-def xsb_hl_command(fname, args):
-
-    c2p_functor(fname, len(args), reg_term(1))
-    _hl_args(args)
-
-    rcode = xsb_command()
+    rcode = xsb_command_string(cmds)
     if rcode == XSB_FAILURE:
         raise Exception ("XSB Command %s %s failure (%d)." % (fname, repr(args), rcode))
     elif rcode == XSB_ERROR:
@@ -458,136 +522,63 @@ def xsb_hl_command(fname, args):
     elif rcode == XSB_OVERFLOW:
         raise Exception ("XSB Command %s %s overflow (%d)." % (fname, repr(args), rcode))
     
-def xsb_format_term(term):
-    if is_var(term):
-        return "_%d" % term
-
-    elif is_int(term):
-        return "%d" % p2c_int(term)
-
-    elif is_float(term):
-        return "%f" % p2c_float(term)
-
-    elif is_nil(term):
-        return "[]"
-
-    elif is_string(term):
-        return "%s" % p2c_string(term)
-
-    elif is_list(term):
-        res =  "["
-        res += xsb_format_term(p2p_car(term))
-        term = p2p_cdr(term)
-        while is_list(term):
-            res += ","
-            res += xsb_format_term(p2p_car(term))
-            term = p2p_cdr(term)
-        
-        if not is_nil(term):
-            res += "|"
-            res += xsb_format_term(term)
-        
-        res += "]"
-        return res
-
-    elif is_functor(term):
-        res = "%s" % p2c_functor(term)
-        if p2c_arity(term) > 0:
-            res += "("
-            res += xsb_format_term(p2p_arg(term,1))
-            i = 2
-            while i <= p2c_arity(term):
-                res += ","
-                res += xsb_format_term(p2p_arg(term,i))
-                i += 1
-            
-            res += ")"
-        return res
-
-    else:
-        return "error, unrecognized type",
-
-
-def xsb_print_term(term):
-    print xsb_format_term(term)
-
-    
-def xsb_hl_query(fname, args):
-
-    c2p_functor(fname, len(args), reg_term(1))
-    vs = _hl_args(args)
-
-    rcode = xsb_query()
-    res = []
-
-    while not rcode:
-
-        row = {}
-
-        for i in vs:
-            a = p2p_arg(reg_term(1),i)
-            if is_float(a):
-                row[vs[i]] = p2c_float(a)
-            elif is_string(a):
-                row[vs[i]] = p2c_string(a).decode('utf8', errors='ignore')
-            elif is_int(a):
-                row[vs[i]] = p2c_int(a)
-            elif is_var(a):
-                row[vs[i]] = None
-            else:
-                xsb_close_query()
-                raise Exception ('failed to detect datatype of arg %d (%s)' % (i, xsb_format_term(a)))
-        res.append(row)            
-        rcode = xsb_next()
-
-    if rcode == XSB_ERROR:
-        raise Exception ("XSB Query %s %s error(%d): %s %s" % (fname, repr(args), rcode, xsb_get_error_type(), xsb_get_error_message()))
-    elif rcode == XSB_OVERFLOW:
-        raise Exception ("XSB Query %s %s overflow (%d)." % (fname, repr(args), rcode))
-
-    return res
-
-def _prolog2py(term):
+def xsb_term2py(term):
 
     if is_float(term):
         return p2c_float(term)
-
-    elif is_string(term):
-        return p2c_string(term).decode('utf8', errors='ignore')
 
     elif is_int(term):
         return p2c_int(term)
 
     elif is_var(term):
-        return None
+        return XSBVar(name=p2c_string(term).decode('utf8', errors='ignore'))
 
     elif is_atom(term):
-        raise Exception ('sorry, not implemented yet.')
+        return XSBAtom(name=p2c_string(term).decode('utf8', errors='ignore'))
 
     elif is_functor(term):
 
         name = p2c_functor(term)
 
         args = []
-
         for i in range(p2c_arity(term)):
             arg = p2p_arg(term, i+1)
-            args.append(_prolog2py(arg))
+            args.append(xsb_term2py(arg))
 
-        return (name, args)
+        return XSBFunctor(name=name, args=args)
+
+    elif is_string(term):
+        return XSBString(value=p2c_string(term).decode('utf8', errors='ignore'))
 
     else:
         list_len = c_int()
         if is_charlist(term, byref(list_len)):
             buf = create_string_buffer(list_len.value+1)
             p2c_chars(term, buf, list_len.value+1)
-            return buf.value
+            return XSBString(value=buf.value.decode('utf8', errors='ignore'))
+        else:
+            res = []
+            while is_list(term):
+                res.append(xsb_term2py(p2p_car(term)))
+                term = p2p_cdr(term)
+        
+            if not is_nil(term):
+                res.append(xsb_term2py(term))
+        
+            return res
 
     raise Exception ('failed to detect datatype of %s' % xsb_format_term(term))
 
-def xsb_hl_query_string(qs):
+def xsb_hl_query(query):
 
-    rcode = xsb_query_string(qs)
+    if isinstance(query, XSBFunctor):
+        querys = str(query) + '.'
+    elif isinstance(query, string_types):
+        querys = query
+    else:
+        raise Exception ('XSBFunctor or String expected.')
+
+    rcode = xsb_query_string(querys)
     res = []
 
     while not rcode:
@@ -596,18 +587,7 @@ def xsb_hl_query_string(qs):
         # import pdb; pdb.set_trace()
 
         try:
-            pyterm = _prolog2py(term)
-
-            if isinstance(pyterm, tuple):
-                row = {}
-                i = 0
-                for a in pyterm[1]:
-                    row[i] = a
-                    i += 1
-                res.append(row)
-            else:
-                res.append(pyterm)
-
+            res.append(xsb_term2py(term))
         except Exception as e:
             xsb_close_query()
             raise e
@@ -620,4 +600,49 @@ def xsb_hl_query_string(qs):
         raise Exception ("XSB Query %s overflow (%d)." % (qs, rcode))
 
     return res
+
+#
+# JSON interface
+#
+
+class XSBJSONEncoder(json.JSONEncoder):
+
+    def default(self, o):
+
+        if isinstance (o, XSBJSON):
+            return o.to_dict()
+
+        try:
+            return json.JSONEncoder.default(self, o)
+        except TypeError:
+            import pdb; pdb.set_trace()
+
+
+_xsb_json_encoder = XSBJSONEncoder()
+
+def xsb_to_json(pl):
+    return _xsb_json_encoder.encode(pl)
+
+def _xsb_from_json(o):
+
+    if o == None:
+        return None
+
+    if not 'pt' in o:
+        return o
+
+    if o['pt'] == 'atom':
+        return XSBAtom(json_dict=o)
+    if o['pt'] == 'functor':
+        return XSBFunctor(json_dict=o)
+    if o['pt'] == 'variable':
+        return XSBVariable(json_dict=o)
+    if o['pt'] == 'string':
+        return XSBString(json_dict=o)
+
+    raise Exception('cannot convert from json: %s .' % repr(o))
+
+def json_to_xsb(jstr):
+    return json.JSONDecoder(object_hook = _xsb_from_json).decode(jstr)
+
 
