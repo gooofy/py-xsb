@@ -3,6 +3,7 @@
 
 #
 # Copyright 2017, 2018 Guenter Bartsch
+# Many improvements and bugfixes by the XSB team at Stony Brook University of New York
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -21,11 +22,18 @@
 # low level XSB interface, converted to ctypes from XSB 3.8's emu/cinterf.h
 #
 
+
+import os
 import sys
 import json
 
 from six    import python_2_unicode_compatible, text_type, string_types
-from ctypes import cdll, c_longlong, c_int64, c_int32, c_int, c_double, c_char_p, POINTER, c_size_t, create_string_buffer, byref
+from ctypes import cdll, c_long, c_longlong, c_int64, c_int32, c_int, \
+    c_double, c_char_p, POINTER, c_size_t, create_string_buffer, byref
+
+is_python3 = sys.version_info[:2] >= (3,0)
+
+XSBMODULE_FUNCTOR = ":"
 
 libxsb = cdll.LoadLibrary('libxsb.so')
 
