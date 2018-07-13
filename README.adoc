@@ -10,18 +10,18 @@ Constructive comments, patches and pull-requests are very welcome.
 Examples
 ~~~~~~~~
 
-High Level Wrappers (demo2.py)
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+High Level Wrappers (demo_highlevel.py)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Setup XSB engine:
 
 [source,python]
 ----
-from xsb import xsb_hl_init, xsb_hl_command, xsb_hl_query, xsb_close, XSBFunctor, XSBVariable, xsb_to_json, json_to_xsb
+from pyxsb import start_xsb_session, end_xsb_session, xsb_hl_command, xsb_hl_query, XSBFunctor, XSBVariable, xsb_to_json, json_to_xsb
 
-XSB_ROOT = '/opt/xsb-3.8.0/'
+XSB_ARCH_DIR = '/opt/xsb-3.8.0/config/x86_64-redhat-linux-gnu'
 
-xsb_hl_init([XSB_ROOT])
+start_xsb_session(XSB_ARCH_DIR)
 ----
 
 run a string XSB command:
@@ -66,26 +66,25 @@ the wrappers can also converted to and from JSON:
     print "restored: %s" % str(row2)
 ----
 
-close the connection:
+close the session:
 [source,python]
 ----
-xsb_close()
+end_xsb_session()
 ----
 
-XSB Low Level API (demo1.py)
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+XSB Low Level API (demo_lowlevel.py)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 First, import xsb and init the library:
 [source,python]
 ----
-from xsb import *
+from pyxsb import start_xsb_session
 
-XSB_ROOT = '/opt/xsb-3.8.0/'
+XSB_ARCH_DIR = '/opt/xsb-3.8.0/config/x86_64-redhat-linux-gnu'
 
-argv = (c_char_p * 2)()
-argv[0] = XSB_ROOT
+start_xsb_session(XSB_ARCH_DIR)
 
-xsb_init(1, argv)
+from pyxsb import *
 ----
 
 execute an XSB command:
@@ -149,7 +148,7 @@ while not rcode:
 close the connection:
 [source,python]
 ----
-xsb_close()
+end_xsb_session()
 ----
 
 Installation Notes
