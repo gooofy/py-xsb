@@ -1,9 +1,9 @@
-py-xsb-prolog
--------------
+py-xsb
+------
 
-A Python - XSB-Prolog bridge enabling querying XSB-Prolog in your Python
-programs. It features a ctypes mapping of XSB's C-Interface as well as some
-higher level convenience wrappers.
+A Python - XSB bridge enabling querying XSB in your Python programs. It
+features a ctypes mapping of XSB's C-Interface as well as some higher level
+convenience wrappers.
 
 Constructive comments, patches and pull-requests are very welcome.
 
@@ -17,7 +17,7 @@ Setup XSB engine:
 
 [source,python]
 ----
-from xsbprolog import xsb_hl_init, xsb_hl_command, xsb_hl_query, xsb_close, XSBFunctor, XSBVariable, xsb_to_json, json_to_xsb
+from xsb import xsb_hl_init, xsb_hl_command, xsb_hl_query, xsb_close, XSBFunctor, XSBVariable, xsb_to_json, json_to_xsb
 
 XSB_ROOT = '/opt/xsb-3.8.0/'
 
@@ -75,10 +75,10 @@ xsb_close()
 XSB Low Level API (demo1.py)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-First, import the xsbprolog and init the library:
+First, import xsb and init the library:
 [source,python]
 ----
-from xsbprolog import *
+from xsb import *
 
 XSB_ROOT = '/opt/xsb-3.8.0/'
 
@@ -155,7 +155,7 @@ xsb_close()
 Installation Notes
 ~~~~~~~~~~~~~~~~~~
 
-`py-xsb-prolog` needs the XSB dynamic library to work: First, follow the standard XSB build instructions:
+`py-xsb` needs the XSB dynamic library to work: First, follow the standard XSB build instructions:
 
 [source,bash]
 ----
@@ -175,12 +175,12 @@ now, in order to build `libxsb.so`, execute this command:
 Links
 ~~~~~
 
-* http://xsb.sourceforge.net/ [XSB Prolog]
+* http://xsb.sourceforge.net/ [XSB]
 
 Requirements
 ~~~~~~~~~~~~
 
-* Python 2 
+* Python 2.7 or Python 3.6 
 * libxsb.so shared library installed and in ld's path
 
 License
@@ -193,4 +193,4 @@ Author
 ~~~~~~
 
 Guenter Bartsch <guenter@zamia.org>
-
+Many improvements and bugfixes by the XSB team at Stony Brook University of New York
