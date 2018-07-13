@@ -2,7 +2,8 @@
 # -*- coding: utf-8 -*- 
 
 #
-# Copyright 2017 Guenter Bartsch
+# Copyright 2017, 2018 Guenter Bartsch
+# Many improvements and bugfixes by the XSB team at Stony Brook University of New York
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -21,25 +22,54 @@
 # demo using the low level XSB API
 #
 
-from xsbprolog import *
+import os
+import platform
+import sys
 
-XSB_ROOT = '/opt/xsb-3.8.0/'
+sys.path.append('..')
 
-argv = (c_char_p * 2)()
-argv[0] = XSB_ROOT
+from pyxsb import start_xsb_session
 
-xsb_init(1, argv)
+# Linux, Windows, Darwin
+our_platform = platform.system()
 
-c2p_functor("consult", 1, reg_term(1))
-c2p_string("ctest",p2p_arg(reg_term(1),1))
+if our_platform == 'Windows':
+    # testing: mix of / and \
+    XSB_ARCH_DIR_MK_CAND = 'H:/XSB\XSB\config/x64-pc-windows'
+    # Annie's
+    XSB_ARCH_DIR_ANNIE_CAND = 'c:/Program Files (x86)/XSB/config/x64-pc-windows'
+    if os.path.isdir(XSB_ARCH_DIR_MK_CAND.replace('\\','/')):
+        XSB_ARCH_DIR = XSB_ARCH_DIR_MK_CAND
+    elif os.path.isdir(XSB_ARCH_DIR_ANNIE_CAND.replace('\\','/')):
+        XSB_ARCH_DIR = XSB_ARCH_DIR_ANNIE_CAND
+    else:
+        raise Exception ("XSB_ARCH_DIR is not set")
+    
+elif our_platform == 'Linux':
+    XSB_ARCH_DIR = '/opt/xsb-3.8.0/config/x86_64-redhat-linux-gnu'
+else:
+    XSB_ARCH_DIR = '/Users/kifer/XSB/XSB/config/i386-apple-darwin17.3.0'
+
+
+## not used any more
+#argv = (c_char_p * 2)()
+#argv[0] = XSB_ROOT
+
+#xsb_init(1, argv)
+start_xsb_session(XSB_ARCH_DIR)
+# should be after start_xsb_session so that imported vars will be updated
+from pyxsb import *
+
+c2p_functor(b"consult", 1, reg_term(1))
+c2p_string(b"ctest",p2p_arg(reg_term(1),1))
 if xsb_command():
     raise Exception ("Error consulting ctest")
 
-if xsb_command_string("consult(basics)."):
+if xsb_command_string(b"consult(basics)."):
     raise Exception ("Error (string) consulting basics.")
 
 # Create the query p(300,X,Y) and send it.
-c2p_functor("p",3,reg_term(1))
+c2p_functor(b"p",3,reg_term(1))
 c2p_int(300,p2p_arg(reg_term(1),1))
 
 rcode = xsb_query()
@@ -48,31 +78,31 @@ rcode = xsb_query()
 while not rcode:
 
     if not is_string(p2p_arg(reg_term(2),1)) and is_string(p2p_arg(reg_term(2),2)):
-        print "2nd and 3rd subfields must be atoms"
+        print ("2nd and 3rd subfields must be atoms")
     else:
-        print "Answer: %d, %s(%s), %s(%s)" % ( p2c_int(p2p_arg(reg_term(1),1)),
+        print ("Answer: %d, %s(%s), %s(%s)" % ( p2c_int(p2p_arg(reg_term(1),1)),
                                                p2c_string(p2p_arg(reg_term(1),2)),
                                                xsb_var_string(1),
                                                p2c_string(p2p_arg(reg_term(1),3)),
-                                               xsb_var_string(2))
+                                               xsb_var_string(2)))
     rcode = xsb_next()
 
 # Create the string query p(300,X,Y) and send it, use higher-level routines.
 
 xsb_make_vars(3)
 xsb_set_var_int(300,1)
-rcode = xsb_query_string("p(X,Y,Z).")
+rcode = xsb_query_string(b"p(X,Y,Z).")
 
 # Print out answer and retrieve next one.
 while not rcode:
     if not is_string(p2p_arg(reg_term(2),2)) and is_string(p2p_arg(reg_term(2),3)):
-        print "2nd and 3rd subfields must be atoms"
+        print ("2nd and 3rd subfields must be atoms")
     else:
-        print "Answer: %d, %s, %s" % (xsb_var_int(1),
+        print ("Answer: %d, %s, %s" % (xsb_var_int(1),
                                       xsb_var_string(2),
-                                      xsb_var_string(3))
+                                      xsb_var_string(3)))
     rcode = xsb_next()
 
 # Close connection */
-xsb_close()
+end_xsb_session()
 
