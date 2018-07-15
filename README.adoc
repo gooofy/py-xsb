@@ -17,11 +17,10 @@ Setup XSB engine:
 
 [source,python]
 ----
-from pyxsb import start_xsb_session, end_xsb_session, pyxsb_command, pyxsb_query, XSBFunctor, XSBVariable, xsb_to_json, json_to_xsb
+from pyxsb import pyxsb_start_session, pyxsb_end_session, pyxsb_command, \
+                  pyxsb_query, XSBFunctor, XSBVariable, xsb_to_json, json_to_xsb
 
-XSB_ARCH_DIR = '/opt/xsb-3.8.0/config/x86_64-redhat-linux-gnu'
-
-start_xsb_session(XSB_ARCH_DIR)
+pyxsb_start_session()
 ----
 
 run a string XSB command:
@@ -69,7 +68,7 @@ the wrappers can also converted to and from JSON:
 close the session:
 [source,python]
 ----
-end_xsb_session()
+pyxsb_end_session()
 ----
 
 XSB Low Level API (demo_lowlevel.py)
@@ -78,11 +77,8 @@ XSB Low Level API (demo_lowlevel.py)
 First, import xsb and init the library:
 [source,python]
 ----
-from pyxsb import start_xsb_session
-
-XSB_ARCH_DIR = '/opt/xsb-3.8.0/config/x86_64-redhat-linux-gnu'
-
-start_xsb_session(XSB_ARCH_DIR)
+from pyxsb import pyxsb_start_session
+pyxsb_start_session()
 
 from pyxsb import *
 ----
@@ -115,7 +111,6 @@ rcode = xsb_query()
 
 # Print out answer and retrieve next one.
 while not rcode:
-
     if not is_string(p2p_arg(reg_term(2),1)) and is_string(p2p_arg(reg_term(2),2)):
         print "2nd and 3rd subfields must be atoms"
     else:
@@ -148,7 +143,7 @@ while not rcode:
 close the connection:
 [source,python]
 ----
-end_xsb_session()
+pyxsb_end_session()
 ----
 
 Installation Notes

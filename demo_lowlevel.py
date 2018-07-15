@@ -28,35 +28,9 @@ import sys
 
 sys.path.append('..')
 
-from pyxsb import start_xsb_session
+from pyxsb import pyxsb_start_session
+pyxsb_start_session()
 
-# Linux, Windows, Darwin
-our_platform = platform.system()
-
-if our_platform == 'Windows':
-    # testing: mix of / and \
-    XSB_ARCH_DIR_MK_CAND = 'H:/XSB\XSB\config/x64-pc-windows'
-    # Annie's
-    XSB_ARCH_DIR_ANNIE_CAND = 'c:/Program Files (x86)/XSB/config/x64-pc-windows'
-    if os.path.isdir(XSB_ARCH_DIR_MK_CAND.replace('\\','/')):
-        XSB_ARCH_DIR = XSB_ARCH_DIR_MK_CAND
-    elif os.path.isdir(XSB_ARCH_DIR_ANNIE_CAND.replace('\\','/')):
-        XSB_ARCH_DIR = XSB_ARCH_DIR_ANNIE_CAND
-    else:
-        raise Exception ("XSB_ARCH_DIR is not set")
-    
-elif our_platform == 'Linux':
-    XSB_ARCH_DIR = '/opt/xsb-3.8.0/config/x86_64-redhat-linux-gnu'
-else:
-    XSB_ARCH_DIR = '/Users/kifer/XSB/XSB/config/i386-apple-darwin17.3.0'
-
-
-## not used any more
-#argv = (c_char_p * 2)()
-#argv[0] = XSB_ROOT
-
-#xsb_init(1, argv)
-start_xsb_session(XSB_ARCH_DIR)
 # should be after start_xsb_session so that imported vars will be updated
 from pyxsb import *
 
@@ -104,5 +78,5 @@ while not rcode:
     rcode = xsb_next()
 
 # Close connection */
-end_xsb_session()
+pyxsb_end_session()
 

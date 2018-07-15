@@ -696,14 +696,47 @@ class XSBFunctor(XSBJSON):
     def to_dict(self):
         return {'pt': 'functor', 'name': self.name, 'module': self.module, 'args': self.args}
 
-def start_xsb_session(xsb_archdir,other_args=[]):
+def pyxsb_start_session(xsb_arch_dir_arg=None, other_args=[]):
 
-    xsb_archdir_forw = xsb_archdir.replace("'","").replace('\\','/')
+    xsb_arch_dir = None
+
+    if not xsb_arch_dir_arg:
+        # try auto-detection
+
+        # Linux, Windows, Darwin
+        our_platform = platform.system()
+
+        if our_platform == 'Windows':
+            # testing: mix of / and \
+            XSB_ARCH_DIR_MK_CAND = 'H:/XSB\XSB\config/x64-pc-windows'
+            # Annie's
+            XSB_ARCH_DIR_ANNIE_CAND = 'c:/Program Files (x86)/XSB/config/x64-pc-windows'
+            if os.path.isdir(XSB_ARCH_DIR_MK_CAND.replace('\\','/')):
+                xsb_arch_dir = XSB_ARCH_DIR_MK_CAND
+            elif os.path.isdir(XSB_ARCH_DIR_ANNIE_CAND.replace('\\','/')):
+                xsb_arch_dir = XSB_ARCH_DIR_ANNIE_CAND
+
+        elif os.path.isdir('/opt/xsb/config/x86_64-redhat-linux-gnu'):
+            xsb_arch_dir = '/opt/xsb/config/x86_64-redhat-linux-gnu'
+
+        elif our_platform == 'Linux':
+            xsb_arch_dir = os.environ["HOME"] + '/XSB/XSB/config/x86_64-unknown-linux-gnu'
+
+        else:
+            xsb_arch_dir = os.environ["HOME"] + '/XSB/XSB/config/i386-apple-darwin17.3.0'
+
+    else:
+        xsb_arch_dir = xsb_arch_dir_arg
+
+    if not xsb_arch_dir:
+        raise Exception ("xsb_arch_dir autodetection failed.")
+
+    xsb_arch_dir_forw = xsb_arch_dir.replace("'","").replace('\\','/')
 
     # get XSB root: strip / then arch then config
-    xsb_root = os.path.dirname(os.path.dirname(xsb_archdir_forw.rstrip('/')))
+    xsb_root = os.path.dirname(os.path.dirname(xsb_arch_dir_forw.rstrip('/')))
 
-    check_session_parameter(xsb_archdir_forw,'/lib/xsb_configuration.P','XSB architecture')
+    check_session_parameter(xsb_arch_dir_forw,'/lib/xsb_configuration.P','XSB architecture')
     check_session_parameter(xsb_root,'/syslib/standard.P','XSB root')
     check_session_parameter(xsb_root,'/lib/foreign.P','XSB root')
 
@@ -712,7 +745,7 @@ def start_xsb_session(xsb_archdir,other_args=[]):
     for i, a in enumerate(xsb_init_args):
         argv[i] = a.encode('utf-8')
 
-    load_xsb_library(xsb_archdir_forw)
+    load_xsb_library(xsb_arch_dir_forw)
     xsb_init(len(xsb_init_args), argv)
 
 def pyxsb_command(cmd):
@@ -903,7 +936,7 @@ def json_to_xsb(jstr):
     return json.JSONDecoder(object_hook = _xsb_from_json).decode(jstr)
 
 
-def end_xsb_session():
+def pyxsb_end_session():
     global libxsb
     xsb_close()
     libxsb=None
