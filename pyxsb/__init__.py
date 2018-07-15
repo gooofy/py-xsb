@@ -715,7 +715,7 @@ def start_xsb_session(xsb_archdir,other_args=[]):
     load_xsb_library(xsb_archdir_forw)
     xsb_init(len(xsb_init_args), argv)
 
-def xsb_hl_command(cmd):
+def pyxsb_command(cmd):
     check_active_xsb_session()
 
     if isinstance(cmd, XSBFunctor):
@@ -822,7 +822,7 @@ def xsb_term2py(term, auto_string=True):
     raise Exception ('failed to detect datatype')
     
 
-def xsb_hl_query(query, auto_string=True):
+def pyxsb_query(query, auto_string=True):
     check_active_xsb_session()
 
     if isinstance(query, XSBFunctor):

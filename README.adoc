@@ -17,7 +17,7 @@ Setup XSB engine:
 
 [source,python]
 ----
-from pyxsb import start_xsb_session, end_xsb_session, xsb_hl_command, xsb_hl_query, XSBFunctor, XSBVariable, xsb_to_json, json_to_xsb
+from pyxsb import start_xsb_session, end_xsb_session, pyxsb_command, pyxsb_query, XSBFunctor, XSBVariable, xsb_to_json, json_to_xsb
 
 XSB_ARCH_DIR = '/opt/xsb-3.8.0/config/x86_64-redhat-linux-gnu'
 
@@ -27,13 +27,13 @@ start_xsb_session(XSB_ARCH_DIR)
 run a string XSB command:
 [source,python]
 ----
-xsb_hl_command('consult(ft).')
+pyxsb_command('consult(ft).')
 ----
 
 run a string query:
 [source,python]
 ----
-for row in xsb_hl_query('label(X, L).'):
+for row in pyxsb_query('label(X, L).'):
     print u"label of %s is %s" % (row[0], row[1])
 ----
 
@@ -41,7 +41,7 @@ queries and commands can also be constructed structurally:
 
 [source,python]
 ----
-for row in xsb_hl_query(XSBFunctor('descend', [XSBVariable('X'), XSBVariable('Y')])):
+for row in pyxsb_query(XSBFunctor('descend', [XSBVariable('X'), XSBVariable('Y')])):
     print u"decendant of %s is %s" % (row[0], row[1])
 ----
 
@@ -50,7 +50,7 @@ For integers, floats and lists primitive python types are used:
 
 [source,python]
 ----
-for row in xsb_hl_query(u'A = 1, B = 0.5, C = "hello", D = yes, E = foo(bar), F = [1.1,2.2], G = \'günter\'.'):
+for row in pyxsb_query(u'A = 1, B = 0.5, C = "hello", D = yes, E = foo(bar), F = [1.1,2.2], G = \'günter\'.'):
     for i, r in enumerate(row):
         print u"#%d: %-10s (type: %-20s, class: %-20s)" % (i, r, type(r), r.__class__)
 ----
