@@ -3,7 +3,7 @@
 
 #
 # Copyright 2017, 2018 Guenter Bartsch
-# Many improvements and bugfixes by the XSB team at Stony Brook University of New York
+# Copyright 2018 Michael Kifer, Annie Liu, David Warren (XSB team at Stony Brook University of New York)
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
