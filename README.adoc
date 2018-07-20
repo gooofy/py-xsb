@@ -21,6 +21,8 @@ from pyxsb import pyxsb_start_session, pyxsb_end_session, pyxsb_command, \
                   pyxsb_query, XSBFunctor, XSBVariable, xsb_to_json, json_to_xsb
 
 pyxsb_start_session()
+# in case auto-detection fails, you can pass the XSB arch dir here like so:
+# pyxsb_start_session('/opt/xsb-3.8.0/config/x86_64-redhat-linux-gnu')
 ----
 
 run a string XSB command:
