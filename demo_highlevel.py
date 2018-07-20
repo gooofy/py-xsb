@@ -32,7 +32,36 @@ sys.path.append('..')
 from pyxsb import pyxsb_start_session, pyxsb_end_session, pyxsb_command, \
                   pyxsb_query, XSBFunctor, XSBVariable, xsb_to_json, json_to_xsb
 
-pyxsb_start_session()
+
+#
+# XSB_ARCH_DIR auto-detection 
+#
+# this code is not needed unless you want to customize it to your setup
+# otherwise you can just call pyxsb_start_session() without any arguments
+# and pyxsb will attempt to auto-detect the arch dir
+#
+
+# Linux, Windows, Darwin
+our_platform = platform.system()
+
+if our_platform == 'Windows':
+    # testing: mix of / and \
+    XSB_ARCH_DIR_MK_CAND = 'H:/XSB\XSB\config/x64-pc-windows'
+    # Annie's
+    XSB_ARCH_DIR_ANNIE_CAND = 'c:/Program Files (x86)/XSB/config/x64-pc-windows'
+    if os.path.isdir(XSB_ARCH_DIR_MK_CAND.replace('\\','/')):
+        XSB_ARCH_DIR = XSB_ARCH_DIR_MK_CAND
+    elif os.path.isdir(XSB_ARCH_DIR_ANNIE_CAND.replace('\\','/')):
+        XSB_ARCH_DIR = XSB_ARCH_DIR_ANNIE_CAND
+    else:
+        raise Exception ("XSB_ARCH_DIR is not set")
+    
+elif our_platform == 'Linux':
+    XSB_ARCH_DIR = '/opt/xsb/config/x86_64-redhat-linux-gnu'
+else:
+    XSB_ARCH_DIR = '/Users/kifer/XSB/XSB/config/i386-apple-darwin17.3.0'
+
+pyxsb_start_session(XSB_ARCH_DIR)
 
 # simple string-based interface
 
