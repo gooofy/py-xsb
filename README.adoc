@@ -23,6 +23,9 @@ from pyxsb import pyxsb_start_session, pyxsb_end_session, pyxsb_command, \
 pyxsb_start_session()
 # in case auto-detection fails, you can pass the XSB arch dir here like so:
 # pyxsb_start_session('/opt/xsb-3.8.0/config/x86_64-redhat-linux-gnu')
+#
+# to determine the location of the XSB arch dir on your machine, run this query in XSB:
+# xsb_configuration:xsb_configuration(config_dir,Dir).
 ----
 
 run a string XSB command:
