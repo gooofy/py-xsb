@@ -27,6 +27,7 @@ import os
 import sys
 import json
 import platform
+import subprocess
 
 from six    import python_2_unicode_compatible, text_type, string_types
 from ctypes import CDLL, c_long, c_longlong, c_int64, c_int32, c_int, \
@@ -728,7 +729,10 @@ def pyxsb_start_session(xsb_arch_dir_arg=None, other_args=[]):
     else:
         xsb_arch_dir = xsb_arch_dir_arg
 
-    if not xsb_arch_dir:
+    if not xsb_arch_dir or not os.path.isdir(xsb_arch_dir):
+        xsb_arch_dir = subprocess.check_output(['xsb','--noprompt','--quietload','--nofeedback','--nobanner','-e','xsb_configuration:xsb_configuration(config_dir,_Dir),write(_Dir),halt.'])
+
+    if not xsb_arch_dir or not os.path.isdir(xsb_arch_dir):
         raise Exception ("xsb_arch_dir autodetection failed.")
 
     xsb_arch_dir_forw = xsb_arch_dir.replace("'","").replace('\\','/')

@@ -3,7 +3,7 @@
 from setuptools import setup, find_packages
 
 setup(name             ='py-xsb',
-      version          ='0.3.2',
+      version          ='0.3.3',
       description      ='Python interface for XSB',
       long_description = open('README.md').read(),
       url              ='https://github.com/gooofy/py-xsb',
