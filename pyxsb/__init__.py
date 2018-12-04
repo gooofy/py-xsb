@@ -489,7 +489,7 @@ def load_xsb_library(arch_dir=None):
     xsb_get_error_type.restype = c_char_p
     xsb_get_error_type.argtypes = []
 
-    # DllExport extern void call_conv print_pterm_fun(CTXTdeclc Cell, int, VarString*);
+    # DllExport extern void call_conv print_pterm_fun(CTXTdeclc prolog_term term);
     try:
         print_pterm_fun = libxsb.print_pterm_fun
         print_pterm_fun.restype = c_char_p
